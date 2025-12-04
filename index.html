@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading Game | Bybit Style</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="balance-section">
+                <div class="balance">
+                    <span>Баланс: </span>
+                    <span id="balance">$2,000.00</span>
+                </div>
+                <div class="equity">
+                    <span>Средства: </span>
+                    <span id="equity">$2,000.00</span>
+                </div>
+                <div class="stars">
+                    <span>⭐ </span>
+                    <span id="stars">0</span>
+                    <button class="btn-small" onclick="buyStars()">Купить звезды</button>
+                </div>
+            </div>
+            <div class="user-section">
+                <button class="btn" onclick="showLeaderboard()">🏆 Рейтинг</button>
+                <button class="btn" onclick="showHistory()">📋 История</button>
+            </div>
+        </header>
+
+        <!-- Main Trading Interface -->
+        <div class="main-content">
+            <!-- Left Panel: Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="coin-selector">
+                        <select id="coinSelect">
+                            <option value="BTC">BTC/USDT</option>
+                            <option value="SHIB">SHIB/USDT</option>
+                            <option value="DOGE">DOGE/USDT</option>
+                        </select>
+                        <div class="timeframe">
+                            <button class="time-btn active">1m</button>
+                            <button class="time-btn">5m</button>
+                            <button class="time-btn">15m</button>
+                            <button class="time-btn">1H</button>
+                        </div>
+                    </div>
+                    <div class="price-info">
+                        <div class="current-price">
+                            <span id="currentPrice">$68,423.50</span>
+                            <span id="priceChange" class="positive">+2.34%</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="chart"></div>
+                <div class="chart-controls">
+                    <button class="btn" onclick="addMarketEvent()">📰 Событие</button>
+                    <button class="btn" onclick="resetGame()">🔄 Сброс</button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Trading -->
+            <div class="trading-panel">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('trade')">Торговля</button>
+                    <button class="tab-btn" onclick="switchTab('positions')">Позиции</button>
+                    <button class="tab-btn" onclick="switchTab('orders')">Стоп-лоссы</button>
+                </div>
+
+                <!-- Trade Tab -->
+                <div id="tradeTab" class="tab-content active">
+                    <div class="leverage-selector">
+                        <span>Плечо:</span>
+                        <button class="lev-btn" data-leverage="1">1x</button>
+                        <button class="lev-btn active" data-leverage="2">2x</button>
+                        <button class="lev-btn" data-leverage="5">5x</button>
+                        <button class="lev-btn" data-leverage="10">10x</button>
+                    </div>
+                    
+                    <div class="position-size">
+                        <label>Объем (USDT):</label>
+                        <input type="number" id="positionSize" value="100" min="10" step="10">
+                        <div class="size-buttons">
+                            <button onclick="setSize(100)">100</button>
+                            <button onclick="setSize(500)">500</button>
+                            <button onclick="setSize(1000)">1000</button>
+                            <button onclick="setSize('all')">Все</button>
+                        </div>
+                    </div>
+
+                    <div class="trade-buttons">
+                        <button class="btn-buy" onclick="openPosition('long')">Купить/Long</button>
+                        <button class="btn-sell" onclick="openPosition('short')">Продать/Short</button>
+                    </div>
+
+                    <div class="position-info">
+                        <div class="info-row">
+                            <span>Маржа:</span>
+                            <span id="marginAmount">$0.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Ликвидация:</span>
+                            <span id="liqPrice">$0.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Доступно:</span>
+                            <span id="availableBalance">$2,000.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Positions Tab -->
+                <div id="positionsTab" class="tab-content">
+                    <div class="positions-list">
+                        <div class="no-positions" id="noPositions">
+                            Нет открытых позиций
+                        </div>
+                        <div id="positionsContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Orders Tab -->
+                <div id="ordersTab" class="tab-content">
+                    <div class="stop-loss-form">
+                        <h4>Установить стоп-лосс</h4>
+                        <div class="form-group">
+                            <label>Цена:</label>
+                            <input type="number" id="stopPrice" placeholder="Цена активации">
+                        </div>
+                        <button class="btn" onclick="setStopLoss()">Установить SL</button>
+                    </div>
+                    <div class="stops-list" id="stopsContainer">
+                        <!-- Stop losses will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel: Market & Events -->
+        <div class="bottom-panel">
+            <div class="market-depth">
+                <h4>Глубина рынка</h4>
+                <div class="depth-container">
+                    <div class="bids">
+                        <h5>Покупка</h5>
+                        <div id="bidsList"></div>
+                    </div>
+                    <div class="asks">
+                        <h5>Продажа</h5>
+                        <div id="asksList"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="events-feed">
+                <h4>📰 События рынка</h4>
+                <div id="eventsFeed"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('historyModal')">&times;</span>
+            <h3>История сделок</h3>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <div id="leaderboardModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('leaderboardModal')">&times;</span>
+            <h3>🏆 Рейтинг трейдеров</h3>
+            <div id="leaderboardList"></div>
+        </div>
+    </div>
+
+    <div id="starsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('starsModal')">&times;</span>
+            <h3>⭐ Покупка Telegram Stars</h3>
+            <div class="stars-packages">
+                <div class="package" onclick="purchaseStars(10, 1000)">
+                    <h4>10 звезд</h4>
+                    <p>$1.00 ~ 1000 игровых $</p>
+                </div>
+                <div class="package" onclick="purchaseStars(50, 5500)">
+                    <h4>50 звезд</h4>
+                    <p>$5.00 ~ 5500 игровых $</p>
+                </div>
+                <div class="package" onclick="purchaseStars(100, 12000)">
+                    <h4>100 звезд</h4>
+                    <p>$10.00 ~ 12000 игровых $</p>
+                </div>
+            </div>
+            <p class="note">* Звезды можно конвертировать в игровые доллары после покупки</p>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/chart.js"></script>
+    <script src="assets/js/trading.js"></script>
+    <script src="assets/js/market.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/telegram.js"></script>
+    <script src="assets/js/events.js"></script>
+</body>
+</html>
